@@ -33,8 +33,9 @@ echo -e "${GREEN}✓ Claude CLI found: $(which claude)${NC}"
 # 3. Install bot
 echo ""
 echo -e "${BOLD}Installing claude-code-telegram...${NC}"
-pip install git+https://github.com/radomx87/claude-code-telegram.git --break-system-packages 2>/dev/null || \
-pip install git+https://github.com/radomx87/claude-code-telegram.git
+REPO_URL="https://github.com/$(git ls-remote --get-url origin 2>/dev/null | sed 's|.*github.com[:/]||;s|\.git$||' || echo 'YOUR_USERNAME/claude-code-telegram')"
+pip install "git+${REPO_URL}.git" --break-system-packages 2>/dev/null || \
+pip install "git+${REPO_URL}.git"
 
 echo -e "${GREEN}✓ Bot installed${NC}"
 

@@ -1,128 +1,251 @@
 # Claude Code Telegram Bot
 
-Telegram-бот для удалённого доступа к Claude Code через смартфон. Работает на базе вашей **Claude Pro/Max подписки** — без дополнительных расходов на API.
-
-## Как это работает
+Telegram-бот для удалённого доступа к Claude Code с телефона.
+Работает на базе **Claude Pro/Max подписки** — без дополнительных расходов на API.
 
 ```
-Telegram → Python бот → Claude Code CLI → ваш сервер
+Телефон (Telegram) → Бот → Claude Code CLI → Ваш сервер
 ```
 
-Бот не обращается к Anthropic API напрямую. Он запускает `claude` CLI, который уже аутентифицирован через вашу подписку.
+---
 
-## Быстрая установка
+## Что умеет бот
+
+- Выполнять bash-команды на сервере
+- Читать, создавать, редактировать файлы
+- Искать в интернете
+- Работать с git-репозиториями
+- Принимать и анализировать файлы и изображения
+- Помнить историю диалога в рамках сессии
+
+---
+
+## Требования
+
+Перед установкой убедитесь, что у вас есть:
+
+- [ ] Linux/macOS сервер или VPS
+- [ ] Python 3.11 или новее
+- [ ] Node.js (для установки Claude CLI)
+- [ ] Подписка Claude Pro или Max на [claude.ai](https://claude.ai)
+
+---
+
+## Пошаговая установка
+
+### Шаг 1 — Установите Claude CLI
+
+Claude CLI — это основной инструмент, через который бот общается с Claude.
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/radomx87/claude-code-telegram/main/install.sh)
+npm install -g @anthropic-ai/claude-code
 ```
 
-Скрипт сам спросит токен бота, ваш Telegram ID и рабочую директорию.
-
-## Ручная установка
-
-### 1. Создайте бота
-
-Напишите `@BotFather` в Telegram → `/newbot` → получите токен.
-
-### 2. Узнайте ваш Telegram ID
-
-Напишите `@userinfobot` → скопируйте числовой ID.
-
-### 3. Установите бот
+После установки войдите в аккаунт:
 
 ```bash
-pip install git+https://github.com/radomx87/claude-code-telegram.git --break-system-packages
+claude auth login
 ```
 
-### 4. Настройте `.env`
+Откроется браузер — войдите через ваш аккаунт claude.ai. После этого проверьте:
+
+```bash
+claude --version
+# Должно показать версию, например: 2.x.x (Claude Code)
+```
+
+---
+
+### Шаг 2 — Создайте Telegram-бота
+
+1. Откройте Telegram, найдите `@BotFather`
+2. Напишите `/newbot`
+3. Придумайте **имя** бота (например: `Мой Ассистент`)
+4. Придумайте **username** — должен заканчиваться на `bot` (например: `my_assistant_bot`)
+5. BotFather пришлёт токен вида: `1234567890:AAF...`
+
+> Сохраните токен — он понадобится на следующем шаге.
+
+---
+
+### Шаг 3 — Узнайте свой Telegram ID
+
+1. Найдите в Telegram бота `@userinfobot`
+2. Напишите ему любое сообщение
+3. Он пришлёт ваш числовой ID, например: `123456789`
+
+> Это нужно для того, чтобы только вы могли управлять ботом.
+
+---
+
+### Шаг 4 — Установите бот
+
+```bash
+pip install git+https://github.com/YOUR_GITHUB_USERNAME/claude-code-telegram.git --break-system-packages
+```
+
+Если `pip` не найден, попробуйте:
+
+```bash
+python3 -m pip install git+https://github.com/YOUR_GITHUB_USERNAME/claude-code-telegram.git --break-system-packages
+```
+
+---
+
+### Шаг 5 — Создайте файл настроек
+
+Создайте папку для бота и перейдите в неё:
 
 ```bash
 mkdir ~/claude-tg-bot && cd ~/claude-tg-bot
 ```
 
-Создайте файл `.env`:
+Создайте файл `.env` (замените значения на свои):
 
-```env
-TELEGRAM_BOT_TOKEN=ваш_токен
-TELEGRAM_BOT_USERNAME=имя_бота_без_собаки
+```bash
+cat > .env << 'EOF'
+# Telegram
+TELEGRAM_BOT_TOKEN=сюда_вставьте_токен_от_BotFather
+TELEGRAM_BOT_USERNAME=имя_бота_без_символа_@
+ALLOWED_USERS=сюда_вставьте_ваш_Telegram_ID
+
+# Рабочая директория (к чему бот будет иметь доступ)
 APPROVED_DIRECTORY=/home/ваш_пользователь
-ALLOWED_USERS=ваш_telegram_id
 
-# Claude
+# Путь к Claude CLI (узнать: which claude)
 CLAUDE_CLI_PATH=/usr/local/bin/claude
+
+# Лимиты
 CLAUDE_MAX_TURNS=50
 CLAUDE_TIMEOUT_SECONDS=600
 
-# Для личного использования — снять ограничения bash
+# Для личного сервера — снять ограничения bash
 DISABLE_SECURITY_PATTERNS=true
 DISABLE_TOOL_VALIDATION=true
 
 # Rate limit
 RATE_LIMIT_REQUESTS=60
 RATE_LIMIT_WINDOW=60
+EOF
 ```
+
+Защитите файл (в нём токены):
 
 ```bash
 chmod 600 .env
 ```
 
-### 5. Запустите
+---
+
+### Шаг 6 — Запустите бот
+
+**Вариант А: запуск вручную** (для теста)
 
 ```bash
-# Разово
-claude-telegram-bot --config-file .env
+claude-telegram-bot --config-file ~/claude-tg-bot/.env
+```
 
-# Как systemd сервис (автозапуск)
-sudo cp claude-tg-bot.service /etc/systemd/system/
+Откройте Telegram, напишите своему боту `/start` — если ответил, всё работает.
+Остановить: `Ctrl+C`
+
+---
+
+**Вариант Б: автозапуск через systemd** (для постоянной работы)
+
+Скачайте шаблон сервиса:
+
+```bash
+cp ~/claude-tg-bot/../claude-tg-bot.service /tmp/claude-tg-bot.service
+```
+
+Откройте файл и замените `YOUR_USERNAME` на ваш логин пользователя:
+
+```bash
+nano /tmp/claude-tg-bot.service
+```
+
+Установите сервис:
+
+```bash
+sudo cp /tmp/claude-tg-bot.service /etc/systemd/system/
+sudo systemctl daemon-reload
 sudo systemctl enable --now claude-tg-bot
 ```
 
+Проверить статус:
+
+```bash
+sudo systemctl status claude-tg-bot
+```
+
+Смотреть логи в реальном времени:
+
+```bash
+journalctl -u claude-tg-bot -f
+```
+
+---
+
 ## Команды бота
 
-| Команда | Описание |
-|---------|----------|
-| `/start` | Начать работу |
-| `/new` | Новая сессия |
-| `/status` | Статус текущей сессии |
-| `/verbose 0\|1\|2` | Уровень детализации вывода |
+| Команда | Что делает |
+|---------|-----------|
+| `/start` | Начать работу, показать справку |
+| `/new` | Начать новую сессию (сбросить контекст) |
+| `/status` | Показать статус текущей сессии |
+| `/verbose 0` | Тихий режим — только финальный ответ |
+| `/verbose 1` | Обычный режим — видны инструменты (по умолчанию) |
+| `/verbose 2` | Подробный режим — видны все действия |
 | `/repo` | Сменить рабочую директорию |
 
-## Возможности
+---
 
-- Выполнение bash-команд
-- Чтение, создание, редактирование файлов
-- Веб-поиск и fetch
-- Git-операции
-- Загрузка файлов и изображений
-- Память сессии (история диалога)
-- Только вы как пользователь (whitelist по Telegram ID)
+## Частые вопросы
 
-## Требования
+**Бот не отвечает**
+→ Проверьте, что `ALLOWED_USERS` содержит ваш правильный Telegram ID (из `@userinfobot`)
 
-- Python 3.11+
-- [Claude Code CLI](https://claude.ai/code) (установленный и аутентифицированный)
-- Claude Pro или Max подписка
-- Linux/macOS сервер или VPS
+**Ошибка "Conflict: terminated by other getUpdates"**
+→ Запущено несколько копий бота. Остановите все и запустите одну:
+```bash
+pkill -f claude-telegram-bot
+sudo systemctl restart claude-tg-bot
+```
+
+**Claude не выполняет команды с `|` или `>`**
+→ Убедитесь, что в `.env` установлено `DISABLE_SECURITY_PATTERNS=true`
+
+**Сессия обрывается на середине**
+→ Увеличьте `CLAUDE_MAX_TURNS` и `CLAUDE_TIMEOUT_SECONDS` в `.env`
+
+**Нет доступа к файлам**
+→ Проверьте путь в `APPROVED_DIRECTORY` — он должен существовать и быть абсолютным
+
+---
 
 ## Безопасность
 
-- Доступ ограничен списком Telegram ID (`ALLOWED_USERS`)
-- Файловый доступ ограничен `APPROVED_DIRECTORY`
-- Все команды логируются
-- `.env` файл должен иметь права `600`
+- Доступ только с вашего Telegram ID — чужие сообщения игнорируются
+- Файловый доступ ограничен папкой `APPROVED_DIRECTORY`
+- Все команды пишутся в audit-лог
+- Файл `.env` должен иметь права `600` — только вы читаете
 
-> `DISABLE_SECURITY_PATTERNS=true` и `DISABLE_TOOL_VALIDATION=true` рекомендуется только для личного сервера с одним пользователем.
+> ⚠️ `DISABLE_SECURITY_PATTERNS=true` и `DISABLE_TOOL_VALIDATION=true` рекомендуется только на личном сервере с одним пользователем.
 
-## Отличия от оригинала
+---
 
-Этот форк основан на [RichardAtCT/claude-code-telegram](https://github.com/RichardAtCT/claude-code-telegram).
+## Основан на
 
-Изменения:
-- `anthropic` SDK обновлён с `0.40` до `0.84`
-- Лучшие дефолты: `CLAUDE_MAX_TURNS=50`, `TIMEOUT=600s`, `RATE_LIMIT=60/min`
+[RichardAtCT/claude-code-telegram](https://github.com/RichardAtCT/claude-code-telegram)
+
+Изменения в этом форке:
+- `anthropic` SDK обновлён с `^0.40` до `^0.84`
+- Лучшие дефолты: `MAX_TURNS=50`, `TIMEOUT=600s`, `RATE_LIMIT=60/min`
 - Скрипт быстрой установки `install.sh`
-- Шаблон systemd сервиса
-- Этот README на русском
+- Шаблон systemd сервиса `claude-tg-bot.service`
+- Подробная документация на русском (этот файл)
+
+---
 
 ## Лицензия
 

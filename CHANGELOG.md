@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-03-11
+
+### Changed
+- Update `anthropic` SDK from `^0.40.0` to `^0.84.0`
+- Increase default `CLAUDE_MAX_TURNS` from 10 to 50
+- Increase default `CLAUDE_TIMEOUT_SECONDS` from 300 to 600
+- Increase default `RATE_LIMIT_REQUESTS` from 10 to 60 per minute
+
+### Added
+- `install.sh`: interactive one-command setup script with systemd support
+- `claude-tg-bot.service`: systemd service template for autostart
+- `README_RU.md`: full step-by-step documentation in Russian
+
 ## [1.5.0] - 2026-03-04
 
 ### Added
