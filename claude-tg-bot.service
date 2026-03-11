@@ -1,0 +1,15 @@
+[Unit]
+Description=Claude Code Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME/claude-tg-bot
+EnvironmentFile=/home/YOUR_USERNAME/claude-tg-bot/.env
+ExecStart=/home/YOUR_USERNAME/.local/bin/claude-telegram-bot --config-file /home/YOUR_USERNAME/claude-tg-bot/.env
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
